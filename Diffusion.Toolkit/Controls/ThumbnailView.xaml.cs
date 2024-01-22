@@ -179,6 +179,36 @@ namespace Diffusion.Toolkit.Controls
                         {
                             RemoveEntry();
                         }
+                        else if (e.KeyboardDevice.Modifiers == ModifierKeys.Shift)
+                        {
+                            // I just could not for the life of me work out how to inject
+                            // a fake right arrow event into the upper widget tree so it
+                            // could trigger both OnPreviewKeyDown and whatever is actually
+                            // catching Key.Right...
+                            DeleteSelected();
+                            if(ThumbnailListView.SelectedItems == null)
+                            {
+                                return;
+                            }
+                            var lastIndex = -1;
+                            for (int i = 0; i < ThumbnailListView.SelectedItems.Count; i++)
+                            {
+                                var selectedItem = ThumbnailListView.SelectedItems[i];
+                                var selectedIndex = ThumbnailListView.Items.IndexOf(selectedItem);
+                                if(selectedIndex > lastIndex)
+                                {
+                                    lastIndex = selectedIndex;
+                                }
+                            }
+                            if( lastIndex < ThumbnailListView.Items.Count - 1)
+                            {
+                                var proposedObject = ThumbnailListView.Items[lastIndex + 1];
+                                ThumbnailListView.SelectedItems.Clear();
+                                ThumbnailListView.SelectedItems.Add(proposedObject);
+                                _selItems.Clear();
+                                _selItems.AddRange(ThumbnailListView.SelectedItems.Cast<ImageEntry>());
+                            }
+                        }
                         else if (e.KeyboardDevice.Modifiers == ModifierKeys.None)
                         {
                             DeleteSelected();
@@ -253,6 +283,10 @@ namespace Diffusion.Toolkit.Controls
         public void ShowItem(int index, bool focus = false)
         {
             var wrapPanel = GetChildOfType<WrapPanel>(this)!;
+            if (wrapPanel == null || wrapPanel.Children == null || wrapPanel.Children.Count == 0)
+            {
+                return;
+            }
             var item = wrapPanel.Children[index] as ListViewItem;
             ThumbnailListView.ScrollIntoView(item);
             item.BringIntoView();
